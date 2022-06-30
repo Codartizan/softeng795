@@ -4,8 +4,8 @@ import json
 
 from loguru import logger
 
-from src.filters.dependent_repo_filter import has_requirements_txt, extract_used_dependency_version, \
-    find_target_version, repo_has_test_covered
+from src.filters.dependent_repo_filter import find_target_version, has_requirements_txt, \
+    extract_used_dependency_version, repo_has_test_covered
 from src.filters.dependent_repos import query_dependent_repos
 from src.filters.projects_init_filter import query_most_used_dependencies
 from src.util.util import get_repo_full_name
@@ -32,11 +32,10 @@ class step_test(unittest.TestCase):
             has_req_txt_file_resp = has_requirements_txt(d)
             found_version = ''
             if has_req_txt_file_resp.status_code == 200:
-                is_usable = True
                 req_txt_content = json.loads(has_req_txt_file_resp.content)
                 req_txt_decoded_content = base64.b64decode(req_txt_content['content']).decode('utf-8')
                 found_version = extract_used_dependency_version(d, req_txt_decoded_content, dependency_name)
-                is_usable = repo_has_test_covered(d, req_txt_decoded_content)
+                is_usable = True and repo_has_test_covered(d, req_txt_decoded_content)
 
             is_usable = True if target_version == found_version else False
 
@@ -47,7 +46,3 @@ class step_test(unittest.TestCase):
         counter += 1
 
     print(prop_dependents)
-
-
-if __name__ == '__main__':
-    unittest.main()
