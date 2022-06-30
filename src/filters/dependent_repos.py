@@ -3,21 +3,21 @@ from bs4 import BeautifulSoup
 from loguru import logger
 
 
-def query_dependent_repos(repo, path=None):
+def query_dependent_repos(dependency_full_name, path=None):
     if path is None:
         path = ''
-    url = 'https://github.com/{}/network/dependents{}'.format(repo, path)
+    url = 'https://github.com/{}/network/dependents{}'.format(dependency_full_name, path)
     next_exists = True
     result = []
     count = 1
-    limit = 50
+    limit = 2
 
     while next_exists:
         r = requests.get(url)
         if 'You have exceeded a secondary rate limit' not in r.text:
             soup = BeautifulSoup(r.content, "html.parser")
             logger.debug(
-                'Scraping on page {} - {} - contains {} dependent repos'.format(count, url, len(soup.findAll("div", {
+                'Scraping on page {} - contains {} dependent repos'.format(count, url, len(soup.findAll("div", {
                     "class": "Box-row"}))))
             result = result + [
                 "{}/{}".format(
@@ -41,17 +41,4 @@ def query_dependent_repos(repo, path=None):
             break
 
     # return 1st is result list, second is page extension
-    return result, url.replace('https://github.com/{}/network/dependents'.format(repo), '')
-
-
-result1 = query_dependent_repos('psf/requests')
-
-result2 = query_dependent_repos('psf/requests', result1[1])
-
-var = result1[0] + result2[0]
-
-result3 = list(set(var))
-
-print(len(result3))
-
-print(len(result1[0]) + len(result2[0]))
+    return result, url.replace('https://github.com/{}/network/dependents'.format(dependency_full_name), '')

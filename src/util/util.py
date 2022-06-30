@@ -12,3 +12,6 @@ def get_ver_major(ver):
     return int(major)
 
 
+def get_repo_full_name(github_url):
+    base_url = 'https://github.com/'
+    return github_url.removeprefix(base_url)
