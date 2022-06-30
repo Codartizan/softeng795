@@ -1,4 +1,4 @@
-import unittest
+import base64
 import base64
 import json
 
@@ -11,7 +11,7 @@ from src.filters.projects_init_filter import query_most_used_dependencies
 from src.util.util import get_repo_full_name
 
 
-class step_test(unittest.TestCase):
+def test_phase_one():
     dependencies = query_most_used_dependencies()
     dependency = dependencies[0]
     dependency_name = dependency.name
@@ -46,3 +46,5 @@ class step_test(unittest.TestCase):
         counter += 1
 
     print(prop_dependents)
+    assert len(prop_dependents) == 5
+
