@@ -16,7 +16,7 @@ def has_requirements_txt(dependent_repo_full_name):
         resp = requests.get(url, headers=GITHUB_HEADERS)
 
     has_req = True if resp.status_code == 200 else False
-    logger.debug('Dependent {} contains requirements file is {}'.format(dependent_repo_full_name, has_req))
+    # logger.debug('Dependent {} contains requirements file is {}'.format(dependent_repo_full_name, has_req))
     return resp
 
 
@@ -25,7 +25,7 @@ def extract_used_dependency_version(dependent_repo_full_name, str_requirements_t
     version_regex = re.compile(regex.format(dependency_name))
     se = version_regex.search(str_requirements_txt_content)
     version = None if se is None else se.group().split('==')[1]
-    logger.debug('Dependent {} has dependency {} version {}'.format(dependent_repo_full_name, dependency_name, version))
+    # logger.debug('Dependent {} has dependency {} version {}'.format(dependent_repo_full_name, dependency_name, version))
     return version
 
 

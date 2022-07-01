@@ -21,7 +21,7 @@ def test_phase_one():
 
     prop_dependents = []
     suffix = ''
-    counter = 0
+    counter = 1
     while len(prop_dependents) < 5:
         logger.debug('Scraping on page {}'.format(counter))
         dependents_tuple = query_dependent_repos(dependency_full_name, suffix)
