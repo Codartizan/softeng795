@@ -40,5 +40,5 @@ def find_proper_version(dependency):  # dependency is a Generic object of projec
     for i in dependency.versions:
         if i.number.startswith(latest_major_version):
             index = dependency.versions.index(i)
-    # logger.debug('Found proper version {}'.format(dependency.versions[index].number))
+    logger.debug('Found proper version {}'.format(dependency.versions[index].number))
     return dependency.versions[index].number

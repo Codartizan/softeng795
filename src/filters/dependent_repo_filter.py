@@ -3,29 +3,34 @@ import re
 import requests
 from loguru import logger
 
-from src.util.constants import GITHUB_HEADERS
+from src.util.rate_limit import token_rate_limit
+from src.util.constants import TOKENS
 from src.util.util import get_ver_major
 
 
 def has_requirements_txt(dependent_repo_full_name):
     base_url = 'https://api.github.com/repos/{}/contents/{}'
     url = base_url.format(dependent_repo_full_name, 'requirements.txt')
-    resp = requests.get(url, headers=GITHUB_HEADERS)
-    if resp.status_code != 200:
-        url = base_url.format(dependent_repo_full_name, 'requirements-dev.txt')
+    token = str(token_rate_limit(TOKENS)[0])
+    if token is not None:
+        GITHUB_HEADERS = {
+            'Accept': 'application/vnd.github.v3+json',
+            'Authorization': 'token ' + token
+        }
         resp = requests.get(url, headers=GITHUB_HEADERS)
-
-    has_req = True if resp.status_code == 200 else False
-    # logger.debug('Dependent {} contains requirements file is {}'.format(dependent_repo_full_name, has_req))
+        if resp.status_code != 200:
+            url = base_url.format(dependent_repo_full_name, 'requirements-dev.txt')
+            resp = requests.get(url, headers=GITHUB_HEADERS)
+    else:
+        raise ValueError('Running out github access limit')
     return resp
 
 
-def extract_used_dependency_version(dependent_repo_full_name, str_requirements_txt_content, dependency_name):
+def extract_used_dependency_version(str_requirements_txt_content, dependency_name):
     regex = '{}==(\\d+\\.(?:\\d+\\.)*\\d+)'
     version_regex = re.compile(regex.format(dependency_name))
     se = version_regex.search(str_requirements_txt_content)
     version = None if se is None else se.group().split('==')[1]
-    # logger.debug('Dependent {} has dependency {} version {}'.format(dependent_repo_full_name, dependency_name, version))
     return version
 
 
