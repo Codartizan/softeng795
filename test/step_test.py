@@ -48,8 +48,9 @@ def test_phase_one():
                 if has_req and has_test and ver_match:
                     logger.debug('Found usable dependent {}'.format(d))
                     prop_dependents.append(d)
+                    write_if_not_exist('usable', dependency_name + '||' + d)
 
-        counter += 1
+                counter += 1
 
     print(prop_dependents)
     assert len(prop_dependents) == 5

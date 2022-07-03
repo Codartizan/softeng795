@@ -1,9 +1,10 @@
 import re
+import base64
 
 import requests
 from loguru import logger
 
-from src.util.rate_limit import token_rate_limit
+from src.filters.rate_limit import token_rate_limit
 from src.util.constants import TOKENS
 from src.util.util import get_ver_major
 
@@ -11,11 +12,11 @@ from src.util.util import get_ver_major
 def has_requirements_txt(dependent_repo_full_name):
     base_url = 'https://api.github.com/repos/{}/contents/{}'
     url = base_url.format(dependent_repo_full_name, 'requirements.txt')
-    token = str(token_rate_limit(TOKENS)[0])
+    token = token_rate_limit(TOKENS)
     if token is not None:
         GITHUB_HEADERS = {
             'Accept': 'application/vnd.github.v3+json',
-            'Authorization': 'token ' + token
+            'Authorization': 'token ' + base64.b64decode(token).decode()
         }
         resp = requests.get(url, headers=GITHUB_HEADERS)
         if resp.status_code != 200:

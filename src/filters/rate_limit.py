@@ -1,6 +1,7 @@
 import requests
 import json
-from generic import Generic
+import base64
+from src.util.generic import Generic
 from loguru import logger
 
 url = 'https://api.github.com/rate_limit'
@@ -11,7 +12,7 @@ def token_rate_limit(tokens):
     for t in tokens:
         headers = {
             'Accept': 'application/vnd.github.v3+json',
-            'Authorization': 'token ' + t
+            'Authorization': 'token ' + base64.b64decode(t).decode()
         }
         resp = requests.get(url, headers=headers)
         if resp.status_code == 200:
@@ -21,4 +22,6 @@ def token_rate_limit(tokens):
                 break
             else:
                 logger.info('Token {} is running out limit'.format(t))
+        elif resp.status_code == 401:
+            logger.info('Token {} is expired'.format(t))
     return token
