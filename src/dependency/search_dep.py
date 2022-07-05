@@ -10,16 +10,20 @@ from src.util.util import get_ver_major
 query_params = {
     "languages": "python",
     "api_key": LIBRARIES_IO_API_KEY,
-    "sort": "dependent_repos_count",  # sorted by most used projects
+    "sort": "rank",  # sorted by source rank
     "platforms": "pypi"  # search in pypi platform
 }
 
-logger.debug('Searching most used projects from Libraries.io')
+logger.debug('Searching highest source rank dependencies from Libraries.io')
 response = requests.get(f"{LIBRARIES_IO_BASE_URL}/search", params=query_params).json()
 logger.debug('Search result contains {} items from Libraries.io'.format(len(response)))
 
 
-def query_most_used_dependencies():
+def search_dependency_by_rank():
+    """
+    Search dependency by source rank on Libraries.io
+    :return: List of top 30 candidate dependency, generic object type
+    """
     candidate_projects = []  # filtered projects
 
     for i in response:
@@ -29,12 +33,17 @@ def query_most_used_dependencies():
                     proj.versions[0].number) >= 1:
                 candidate_projects.append(proj)
 
-    # logger.debug('Found {} projects satisfied all conditions'.format(len(candidate_projects)))
+    logger.debug('Found {} projects satisfied all conditions'.format(len(candidate_projects)))
 
     return candidate_projects
 
 
-def find_proper_version(dependency):  # dependency is a Generic object of project result from Libraries.io
+def find_research_version(dependency):
+    """
+    Extract the newest of the second last version
+    :param dependency: Generic object of top rank dependency search from Libraries.io
+    :return:
+    """
     index = ''
     latest_major_version = str(get_ver_major(dependency.versions[len(dependency.versions) - 1].number) - 1)
     for i in dependency.versions:

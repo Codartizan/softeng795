@@ -3,18 +3,19 @@ import json
 
 from loguru import logger
 
-from src.filters.dependent_repo_filter import find_target_version, has_requirements_txt, \
-    extract_used_dependency_version, repo_has_test_covered
-from src.filters.dependent_repos import query_dependent_repos
-from src.filters.projects_init_filter import query_most_used_dependencies
-from src.util.util import get_repo_full_name, write_if_not_exist
+from src.dependent.dep_filter import find_target_version, has_content, \
+    extract_dependency_version, has_pytest, pkg_management_validation
+from src.dependent.dep_scraper import scraping_dependent_pkg
+from src.dependency.search_dep import search_dependency_by_rank
+from src.util.util import repo_full_name, write_if_not_exist, mapping_resp_to_generic
+from src.dependent.code_search import dep_appearance
 
 
 def test_phase_one():
-    dependencies = query_most_used_dependencies()
-    dependency = dependencies[1]
+    dependencies = search_dependency_by_rank()
+    dependency = dependencies[2]
     dependency_name = dependency.name
-    dependency_full_name = get_repo_full_name(dependency.repository_url)
+    dependency_full_name = repo_full_name(dependency.repository_url)
     target_version = find_target_version(dependency)
     logger.debug('Target dependency full name - {}'.format(dependency_full_name))
 
@@ -23,7 +24,7 @@ def test_phase_one():
     counter = 1
     while len(prop_dependents) < 5:
         logger.debug('Scraping on page round {}'.format(counter))
-        dependents_tuple = query_dependent_repos(dependency_full_name, suffix)
+        dependents_tuple = scraping_dependent_pkg(dependency_full_name, suffix)
         suffix = dependents_tuple[1]
 
         for d in dependents_tuple[0]:
@@ -31,26 +32,28 @@ def test_phase_one():
                 has_req = False
                 has_test = False
                 ver_match = False
-                has_req_txt_file_resp = has_requirements_txt(d)
-                req_txt_decoded_content = ''
-                if has_req_txt_file_resp.status_code == 200:
+                has_pkg_management = pkg_management_validation(d)
+                appearance = dep_appearance(dependency_name, d)
+
+                if has_pkg_management.status_code == 200:
                     has_req = True
-
-                if has_req:
-                    req_txt_content = json.loads(has_req_txt_file_resp.content)
-                    req_txt_decoded_content = base64.b64decode(req_txt_content['content']).decode('utf-8')
-                    found_version = extract_used_dependency_version(req_txt_decoded_content, dependency_name)
+                    res_obj = mapping_resp_to_generic(has_pkg_management)
+                    pkg_management_decoded_content = base64.b64decode(res_obj.content).decode()
+                    # req_txt_content = json.loads(has_pkg_management.content)
+                    # pkg_management_decoded_content = base64.b64decode(req_txt_content['content']).decode('utf-8')
+                    found_version = extract_dependency_version(pkg_management_decoded_content, dependency_name)
+                    logger.debug('{} is using {} version {}'.format(d, dependency_name, found_version))
+                    has_test = has_pytest(d, pkg_management_decoded_content)
                     ver_match = target_version == found_version
+                    write_if_not_exist('{}-{}'.format(dependency_name, found_version),
+                                       '{} | {} | {}'.format(d, res_obj.name, appearance))
 
-                if ver_match:
-                    has_test = repo_has_test_covered(d, req_txt_decoded_content)
-
-                if has_req and has_test and ver_match:
+                if has_req and has_test and ver_match and appearance > 3:
                     logger.debug('Found usable dependent {}'.format(d))
                     prop_dependents.append(d)
                     write_if_not_exist('usable', dependency_name + '||' + d)
 
-                counter += 1
+        counter += 1
 
     print(prop_dependents)
     assert len(prop_dependents) == 5
