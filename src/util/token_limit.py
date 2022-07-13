@@ -1,6 +1,9 @@
-import requests
-import json
 import base64
+import json
+import secrets
+
+import requests
+
 from src.util.generic import Generic
 from loguru import logger
 
@@ -12,20 +15,18 @@ def token_limit(tokens):
     :return: PAT string
     """
     token = None
-    for t in tokens:
+    remaining = 0
+    while remaining < 1:
+        token = secrets.choice(tokens)
         headers = {
             'Accept': 'application/vnd.github.v3+json',
-            'Authorization': 'token ' + base64.b64decode(t).decode()
+            'Authorization': 'token ' + base64.b64decode(token).decode()
         }
         resp = requests.get('https://api.github.com/rate_limit', headers=headers)
+
         if resp.status_code == 200:
             body = json.loads(json.dumps(resp.json()), object_hook=Generic.from_dict)
-            if body.rate.remaining > 0:
-                logger.info('{} rate limit remaining: {}'.format(tokens.index(t), body.rate.remaining))
-                token = t
-                break
-            elif body.rate.remaining == 0:
-                logger.info('Token {} is running out limit'.format(t))
-        elif resp.status_code == 401:
-            logger.info('Token {} is expired'.format(t))
+            remaining = body.rate.remaining
+
+    logger.info('{}-{} rate limit remaining'.format(token, remaining))
     return token

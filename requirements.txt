@@ -6,3 +6,4 @@ loguru==0.6.0
 bs4==0.0.1
 numpy==1.23.0
 pytest==7.1.2
+selenium==4.3.0

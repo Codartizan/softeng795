@@ -1,6 +1,7 @@
 import re
 import base64
-
+import time
+import random
 import requests
 from loguru import logger
 
@@ -14,7 +15,7 @@ def has_content(str_owner_repo, str_content):
     Checking if repo contains content/file
     :param str_owner_repo: repo full name, e.g. owner/repo
     :param str_content: file name
-    :return:
+    :return: requests response
     """
     base_url = 'https://api.github.com/repos/{}/contents/{}'
     url = base_url.format(str_owner_repo, str_content)
@@ -24,6 +25,7 @@ def has_content(str_owner_repo, str_content):
             'Accept': 'application/vnd.github.v3+json',
             'Authorization': 'token ' + base64.b64decode(token).decode()
         }
+        time.sleep(random.uniform(0, 1))
         resp = requests.get(url, headers=GITHUB_HEADERS)
     else:
         raise ValueError('Running out github access limit')
